@@ -4,14 +4,17 @@ import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { Database } from '@/types/database';
 
-function makeSupabase() {
-  const cookieStore = cookies();
+async function makeSupabase() {
+  const cookieStore = await cookies();
+
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() { return cookieStore.getAll(); },
+        getAll() {
+          return cookieStore.getAll();
+        },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) =>
             cookieStore.set(name, value, options)
@@ -29,15 +32,18 @@ function makeAdminClient() {
   );
 }
 
-// GET /api/posts/[slug]
+// ===================== GET =====================
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
+  const { slug } = await params;
+
   try {
-    const supabase = makeSupabase();
-    const { data: post, error } = await supabase
-      .from('posts')
+    const supabase = await makeSupabase();
+
+    const { data: post } = await supabase
+      .from('posts' as any)
       .select(`
         *,
         author:users!posts_author_id_fkey(id, name, email, role, avatar_url),
@@ -46,100 +52,128 @@ export async function GET(
           user:users!comments_user_id_fkey(id, name, email, avatar_url)
         )
       `)
-      .eq('slug', params.slug)
+      .eq('slug', slug)
       .eq('published', true)
       .single();
 
-    if (error || !post) {
+    if (!post) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
+
     return NextResponse.json({ post });
-  } catch (error) {
-    console.error('GET /api/posts/[slug] error:', error);
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch post' }, { status: 500 });
   }
 }
 
-// PUT /api/posts/[slug]
+// ===================== PUT =====================
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
+  const { slug } = await params;
+
   try {
-    const supabase = makeSupabase();
+    const supabase = await makeSupabase();
     const admin = makeAdminClient();
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { data: currentUser } = await supabase
-      .from('users').select('*').eq('id', session.user.id).single();
+      .from('users' as any)
+      .select('*')
+      .eq('id', session.user.id)
+      .single();
+
+    const user = currentUser as any;
 
     const { data: existingPost } = await supabase
-      .from('posts').select('*').eq('slug', params.slug).single();
+      .from('posts' as any)
+      .select('*')
+      .eq('slug', slug)
+      .single();
 
-    if (!existingPost) return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+    const postData = existingPost as any;
+
+    if (!postData) {
+      return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+    }
 
     const canEdit =
-      currentUser?.role === 'admin' ||
-      (currentUser?.role === 'author' && existingPost.author_id === session.user.id);
+      user?.role === 'admin' ||
+      (user?.role === 'author' && postData.author_id === session.user.id);
 
-    if (!canEdit) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!canEdit) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     const body = await request.json();
     const { title, body: postBody, image_url } = body;
 
-    const { data: post, error } = await admin
-      .from('posts')
+    const { data: post } = await (admin
+      .from('posts' as any) as any)
       .update({
-        title: title || existingPost.title,
-        body: postBody || existingPost.body,
-        image_url: image_url !== undefined ? image_url : existingPost.image_url,
+        title: title || postData.title,
+        body: postBody || postData.body,
+        image_url: image_url !== undefined ? image_url : postData.image_url,
       })
-      .eq('id', existingPost.id)
-      .select(`*, author:users!posts_author_id_fkey(id, name, email, role)`)
+      .eq('id', postData.id)
+      .select('*')
       .single();
 
-    if (error) throw error;
     return NextResponse.json({ post });
-  } catch (error) {
-    console.error('PUT /api/posts/[slug] error:', error);
+  } catch {
     return NextResponse.json({ error: 'Failed to update post' }, { status: 500 });
   }
 }
 
-// DELETE /api/posts/[slug]
+// ===================== DELETE =====================
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
+  const { slug } = await params;
+
   try {
-    const supabase = makeSupabase();
+    const supabase = await makeSupabase();
     const admin = makeAdminClient();
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { data: currentUser } = await supabase
-      .from('users').select('*').eq('id', session.user.id).single();
+      .from('users' as any)
+      .select('*')
+      .eq('id', session.user.id)
+      .single();
+
+    const user = currentUser as any;
 
     const { data: existingPost } = await supabase
-      .from('posts').select('*').eq('slug', params.slug).single();
+      .from('posts' as any)
+      .select('*')
+      .eq('slug', slug)
+      .single();
 
-    if (!existingPost) return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+    const postData = existingPost as any;
+
+    if (!postData) {
+      return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+    }
 
     const canDelete =
-      currentUser?.role === 'admin' ||
-      (currentUser?.role === 'author' && existingPost.author_id === session.user.id);
+      user?.role === 'admin' ||
+      (user?.role === 'author' && postData.author_id === session.user.id);
 
-    if (!canDelete) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!canDelete) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
-    const { error } = await admin.from('posts').delete().eq('id', existingPost.id);
-    if (error) throw error;
+    await admin.from('posts' as any).delete().eq('id', postData.id);
 
     return NextResponse.json({ message: 'Post deleted successfully' });
-  } catch (error) {
-    console.error('DELETE /api/posts/[slug] error:', error);
+  } catch {
     return NextResponse.json({ error: 'Failed to delete post' }, { status: 500 });
   }
 }
