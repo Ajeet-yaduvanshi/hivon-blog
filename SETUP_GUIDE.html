@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Hivon Blog — Setup Guide</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --ink: #0f0e0c;
+    --ink-soft: #2d2b27;
+    --ink-muted: #6b6760;
+    --cream: #f7f4ef;
+    --cream-dark: #ede9e1;
+    --accent: #c8493a;
+    --accent-light: #f5d5d2;
+    --gold: #c9a227;
+    --white: #ffffff;
+    --border: #d8d3ca;
+    --success: #3a7d44;
+    --code-bg: #1c1b19;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--ink-soft);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  /* Header */
+  .header {
+    background: var(--ink);
+    color: var(--cream);
+    padding: 3rem 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(255,255,255,0.03) 60px, rgba(255,255,255,0.03) 61px);
+  }
+  .header-inner { position: relative; max-width: 720px; margin: 0 auto; }
+  .header-badge {
+    display: inline-block;
+    background: var(--accent);
+    color: white;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.9rem;
+    border-radius: 20px;
+    margin-bottom: 1.25rem;
+  }
+  .header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.75rem;
+    color: var(--cream);
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 0.75rem;
+  }
+  .header h1 span { color: var(--accent); font-style: italic; }
+  .header p { color: #9b978f; font-size: 1rem; }
+
+  /* Main layout */
+  .layout { display: flex; gap: 0; max-width: 1100px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+
+  /* Sidebar TOC */
+  .sidebar {
+    width: 230px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 2rem;
+    height: fit-content;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin-right: 2.5rem;
+    align-self: flex-start;
+  }
+  .sidebar-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1rem;
+  }
+  .toc-item {
+    display: block;
+    padding: 0.4rem 0.6rem;
+    border-radius: 5px;
+    font-size: 0.84rem;
+    color: var(--ink-muted);
+    text-decoration: none;
+    transition: all 150ms;
+    margin-bottom: 0.15rem;
+  }
+  .toc-item:hover { background: var(--cream); color: var(--ink); }
+  .toc-num {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    background: var(--cream-dark);
+    color: var(--ink-muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-align: center;
+    line-height: 18px;
+    margin-right: 0.4rem;
+  }
+
+  /* Content */
+  .content { flex: 1; min-width: 0; }
+
+  /* Section */
+  .section {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .step-badge {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--accent);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .section h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.35rem;
+    color: var(--ink);
+  }
+  .section h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 1.25rem 0 0.6rem;
+    letter-spacing: 0.01em;
+  }
+
+  /* Code blocks */
+  pre {
+    background: var(--code-bg);
+    border-radius: 8px;
+    padding: 1.1rem 1.25rem;
+    overflow-x: auto;
+    margin: 0.75rem 0;
+  }
+  code {
+    font-family: 'DM Mono', 'Courier New', monospace;
+    font-size: 0.84rem;
+    line-height: 1.6;
+    color: #e8e4dc;
+  }
+  .inline-code {
+    background: var(--cream-dark);
+    color: var(--accent);
+    padding: 0.12em 0.4em;
+    border-radius: 4px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85em;
+  }
+  .comment { color: #6b7280; }
+  .string { color: #86efac; }
+  .key { color: #93c5fd; }
+  .value { color: #fca5a5; }
+
+  /* Env table */
+  .env-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; margin: 0.75rem 0; }
+  .env-table th {
+    background: var(--cream);
+    padding: 0.6rem 0.875rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    border: 1px solid var(--border);
+  }
+  .env-table td {
+    padding: 0.6rem 0.875rem;
+    border: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .env-table tr:hover td { background: #fafaf9; }
+  .env-key { font-family: 'DM Mono', monospace; font-size: 0.8rem; color: var(--accent); font-weight: 500; }
+  .env-where { font-size: 0.8rem; color: var(--success); font-weight: 500; }
+
+  /* File tree */
+  .file-tree {
+    background: var(--code-bg);
+    border-radius: 8px;
+    padding: 1.25rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    line-height: 1.8;
+    color: #c9c5bc;
+    overflow-x: auto;
+    margin: 0.75rem 0;
+  }
+  .tree-dir { color: #93c5fd; font-weight: 500; }
+  .tree-file { color: #e8e4dc; }
+  .tree-comment { color: #5f6472; font-style: italic; }
+  .tree-indent { color: #3d3c38; }
+
+  /* Role cards */
+  .roles-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 0.75rem 0; }
+  .role-card {
+    border-radius: 8px;
+    padding: 1.1rem;
+    border: 1.5px solid var(--border);
+  }
+  .role-card.author { border-color: #93c5fd; background: #eff6ff; }
+  .role-card.viewer { border-color: #86efac; background: #f0fdf4; }
+  .role-card.admin  { border-color: #fcd34d; background: #fffbeb; }
+  .role-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+  }
+  .author .role-label { color: #1d4ed8; }
+  .viewer .role-label { color: #166534; }
+  .admin  .role-label { color: #92400e; }
+  .role-perm {
+    font-size: 0.8rem;
+    color: var(--ink-muted);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+    margin-bottom: 0.3rem;
+  }
+  .role-perm::before { content: '✓'; color: var(--success); font-weight: 700; flex-shrink: 0; margin-top: 0.05rem; }
+
+  /* Flow steps */
+  .flow { display: flex; flex-direction: column; gap: 0; margin: 0.75rem 0; }
+  .flow-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.875rem;
+    padding: 0.875rem 1rem;
+    background: var(--cream);
+    border: 1px solid var(--border);
+    border-radius: 0;
+    position: relative;
+  }
+  .flow-step:first-child { border-radius: 8px 8px 0 0; }
+  .flow-step:last-child  { border-radius: 0 0 8px 8px; }
+  .flow-step + .flow-step { border-top: none; }
+  .flow-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: white;
+    font-size: 0.72rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+  .flow-text { font-size: 0.875rem; color: var(--ink-soft); }
+  .flow-text strong { color: var(--ink); }
+
+  /* Callout */
+  .callout {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1rem 1.1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    margin: 1rem 0;
+  }
+  .callout-tip    { background: #f0fdf4; border-left: 4px solid var(--success); color: #14532d; }
+  .callout-warn   { background: #fffbeb; border-left: 4px solid var(--gold);    color: #78350f; }
+  .callout-info   { background: #eff6ff; border-left: 4px solid #3b82f6;        color: #1e3a5f; }
+  .callout-icon { font-size: 1.1rem; flex-shrink: 0; }
+
+  /* Tech stack table */
+  .stack-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+  .stack-table th {
+    background: var(--ink);
+    color: var(--cream);
+    padding: 0.6rem 1rem;
+    text-align: left;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .stack-table td { padding: 0.7rem 1rem; border-bottom: 1px solid var(--border); }
+  .stack-table tr:last-child td { border-bottom: none; }
+  .stack-table tr:hover td { background: var(--cream); }
+  .stack-layer { font-weight: 500; color: var(--ink); }
+  .stack-tech { color: var(--accent); font-weight: 500; }
+  .stack-why { color: var(--ink-muted); font-size: 0.8rem; }
+
+  /* Checklist */
+  .checklist { list-style: none; margin: 0.75rem 0; }
+  .checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.875rem;
+    color: var(--ink-soft);
+  }
+  .checklist li:last-child { border-bottom: none; }
+  .check { color: var(--success); font-weight: 700; flex-shrink: 0; }
+
+  /* Tag */
+  .tag {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: var(--cream-dark);
+    color: var(--ink-muted);
+    margin-left: 0.35rem;
+  }
+  .tag-red { background: var(--accent-light); color: var(--accent); }
+  .tag-green { background: #dcfce7; color: var(--success); }
+
+  @media (max-width: 768px) {
+    .layout { flex-direction: column; }
+    .sidebar { width: 100%; position: static; margin-right: 0; margin-bottom: 1.5rem; }
+    .roles-grid { grid-template-columns: 1fr; }
+    .header h1 { font-size: 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-badge">Hivon Automations · Internship Assignment</div>
+    <h1>Hivon Blog Platform<br><span>Setup & Architecture Guide</span></h1>
+    <p>Next.js 14 · Supabase · Google Gemini AI · Vercel</p>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-title">Contents</div>
+    <a href="#overview"     class="toc-item"><span class="toc-num">1</span> Overview</a>
+    <a href="#stack"        class="toc-item"><span class="toc-num">2</span> Tech Stack</a>
+    <a href="#structure"    class="toc-item"><span class="toc-num">3</span> Project Structure</a>
+    <a href="#database"     class="toc-item"><span class="toc-num">4</span> Database Schema</a>
+    <a href="#roles"        class="toc-item"><span class="toc-num">5</span> User Roles</a>
+    <a href="#setup"        class="toc-item"><span class="toc-num">6</span> Local Setup</a>
+    <a href="#env"          class="toc-item"><span class="toc-num">7</span> Env Variables</a>
+    <a href="#ai"           class="toc-item"><span class="toc-num">8</span> AI Integration</a>
+    <a href="#deploy"       class="toc-item"><span class="toc-num">9</span> Deployment</a>
+    <a href="#flows"        class="toc-item"><span class="toc-num">10</span> Key Flows</a>
+    <a href="#checklist"    class="toc-item"><span class="toc-num">11</span> Submission Checklist</a>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <div class="content">
+
+    <!-- 1. OVERVIEW -->
+    <div class="section" id="overview">
+      <div class="section-header">
+        <div class="step-badge">1</div>
+        <h2>Project Overview</h2>
+      </div>
+      <p>A full-stack blogging platform for <strong>Hivon Automations</strong> internship assignment. It supports three user roles, AI-powered post summaries via Google Gemini, search, pagination, and a full admin panel — all built with Next.js 14 App Router and Supabase.</p>
+      <div class="callout callout-tip" style="margin-top:1rem">
+        <span class="callout-icon">✦</span>
+        <div>Every blog post automatically gets a <strong>~200-word AI summary</strong> generated by Google Gemini at creation time, stored in the database, and displayed on the listing page — with zero repeated API calls.</div>
+      </div>
+    </div>
+
+    <!-- 2. TECH STACK -->
+    <div class="section" id="stack">
+      <div class="section-header">
+        <div class="step-badge">2</div>
+        <h2>Tech Stack</h2>
+      </div>
+      <table class="stack-table">
+        <thead><tr><th>Layer</th><th>Technology</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td class="stack-layer">Frontend + Backend</td><td class="stack-tech">Next.js 14 (App Router)</td><td class="stack-why">Server components, API routes, middleware — all in one</td></tr>
+          <tr><td class="stack-layer">Authentication</td><td class="stack-tech">Supabase Auth</td><td class="stack-why">Built-in email/password, session cookies, triggers</td></tr>
+          <tr><td class="stack-layer">Database</td><td class="stack-tech">Supabase (PostgreSQL)</td><td class="stack-why">RLS policies, real-time, free tier, triggers</td></tr>
+          <tr><td class="stack-layer">AI Summaries</td><td class="stack-tech">Google Gemini 1.5 Flash</td><td class="stack-why">Free tier, fast, accurate summarization</td></tr>
+          <tr><td class="stack-layer">Deployment</td><td class="stack-tech">Vercel</td><td class="stack-why">Zero-config Next.js deployment, env variable management</td></tr>
+          <tr><td class="stack-layer">Version Control</td><td class="stack-tech">Git + GitHub</td><td class="stack-why">Standard — CI/CD hooks with Vercel</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 3. STRUCTURE -->
+    <div class="section" id="structure">
+      <div class="section-header">
+        <div class="step-badge">3</div>
+        <h2>Project File Structure</h2>
+      </div>
+      <div class="file-tree">
+<span class="tree-dir">hivon-blog/</span>
+├── <span class="tree-dir">src/</span>
+│   ├── <span class="tree-dir">app/</span>
+│   │   ├── <span class="tree-dir">api/</span>
+│   │   │   ├── <span class="tree-dir">posts/</span>
+│   │   │   │   ├── <span class="tree-file">route.ts</span>        <span class="tree-comment">← GET all, POST new</span>
+│   │   │   │   └── <span class="tree-dir">[slug]/</span>
+│   │   │   │       └── <span class="tree-file">route.ts</span>    <span class="tree-comment">← GET, PUT, DELETE one</span>
+│   │   │   ├── <span class="tree-dir">comments/</span>
+│   │   │   │   └── <span class="tree-file">route.ts</span>        <span class="tree-comment">← POST comment, DELETE</span>
+│   │   │   └── <span class="tree-dir">auth/callback/</span>
+│   │   │       └── <span class="tree-file">route.ts</span>        <span class="tree-comment">← Supabase OAuth callback</span>
+│   │   ├── <span class="tree-dir">auth/</span>
+│   │   │   ├── <span class="tree-dir">login/</span><span class="tree-file">page.tsx</span>
+│   │   │   └── <span class="tree-dir">register/</span><span class="tree-file">page.tsx</span>    <span class="tree-comment">← Role selection UI</span>
+│   │   ├── <span class="tree-dir">blog/</span>
+│   │   │   ├── <span class="tree-file">page.tsx</span>            <span class="tree-comment">← Listing + search + pagination</span>
+│   │   │   └── <span class="tree-dir">[slug]/</span><span class="tree-file">page.tsx</span>    <span class="tree-comment">← Post + AI summary + comments</span>
+│   │   ├── <span class="tree-dir">dashboard/</span>
+│   │   │   ├── <span class="tree-file">page.tsx</span>            <span class="tree-comment">← User dashboard + post list</span>
+│   │   │   └── <span class="tree-dir">posts/</span>
+│   │   │       ├── <span class="tree-dir">new/</span><span class="tree-file">page.tsx</span>        <span class="tree-comment">← Create post form</span>
+│   │   │       └── <span class="tree-dir">[slug]/edit/</span><span class="tree-file">page.tsx</span> <span class="tree-comment">← Edit post form</span>
+│   │   ├── <span class="tree-dir">admin/</span><span class="tree-file">page.tsx</span>        <span class="tree-comment">← Admin panel: posts/comments/users</span>
+│   │   ├── <span class="tree-file">layout.tsx</span>              <span class="tree-comment">← Root layout with Navbar</span>
+│   │   ├── <span class="tree-file">page.tsx</span>                <span class="tree-comment">← Homepage / landing</span>
+│   │   └── <span class="tree-file">globals.css</span>             <span class="tree-comment">← Design system tokens</span>
+│   ├── <span class="tree-dir">components/layout/</span>
+│   │   └── <span class="tree-file">Navbar.tsx</span>              <span class="tree-comment">← Role-aware navigation</span>
+│   ├── <span class="tree-dir">lib/</span>
+│   │   ├── <span class="tree-file">ai.ts</span>                   <span class="tree-comment">← Google Gemini integration</span>
+│   │   ├── <span class="tree-file">auth.ts</span>                 <span class="tree-comment">← getCurrentUser, requireRole</span>
+│   │   ├── <span class="tree-file">slugify.ts</span>              <span class="tree-comment">← URL slug generation</span>
+│   │   └── <span class="tree-dir">supabase/</span>
+│   │       ├── <span class="tree-file">client.ts</span>           <span class="tree-comment">← Browser Supabase client</span>
+│   │       └── <span class="tree-file">server.ts</span>           <span class="tree-comment">← Server + admin client</span>
+│   ├── <span class="tree-file">middleware.ts</span>               <span class="tree-comment">← Route guard for /dashboard, /admin</span>
+│   └── <span class="tree-dir">types/</span><span class="tree-file">database.ts</span>         <span class="tree-comment">← TypeScript types for DB</span>
+├── <span class="tree-file">supabase-schema.sql</span>         <span class="tree-comment">← Run this in Supabase SQL Editor</span>
+├── <span class="tree-file">.env.local.example</span>
+├── <span class="tree-file">README.md</span>
+└── <span class="tree-file">SUBMISSION.md</span>
+      </div>
+    </div>
+
+    <!-- 4. DATABASE -->
+    <div class="section" id="database">
+      <div class="section-header">
+        <div class="step-badge">4</div>
+        <h2>Database Schema</h2>
+      </div>
+      <p style="margin-bottom:1rem; font-size:0.875rem; color:var(--ink-muted)">Three tables as required. Run <span class="inline-code">supabase-schema.sql</span> in the Supabase SQL Editor.</p>
+
+      <h3>users</h3>
+      <pre><code><span class="key">id</span>           UUID PRIMARY KEY  <span class="comment">-- references auth.users</span>
+<span class="key">name</span>         TEXT NOT NULL
+<span class="key">email</span>        TEXT UNIQUE NOT NULL
+<span class="key">role</span>         TEXT  <span class="comment">-- 'author' | 'viewer' | 'admin'</span>
+<span class="key">avatar_url</span>   TEXT
+<span class="key">created_at</span>   TIMESTAMPTZ</code></pre>
+
+      <h3>posts</h3>
+      <pre><code><span class="key">id</span>           UUID PRIMARY KEY
+<span class="key">title</span>        TEXT NOT NULL
+<span class="key">body</span>         TEXT NOT NULL
+<span class="key">image_url</span>    TEXT             <span class="comment">-- featured image</span>
+<span class="key">author_id</span>    UUID → users.id
+<span class="key">summary</span>      TEXT             <span class="comment">-- AI-generated, stored once</span>
+<span class="key">slug</span>         TEXT UNIQUE NOT NULL
+<span class="key">published</span>    BOOLEAN DEFAULT TRUE
+<span class="key">created_at</span>   TIMESTAMPTZ</code></pre>
+
+      <h3>comments</h3>
+      <pre><code><span class="key">id</span>            UUID PRIMARY KEY
+<span class="key">post_id</span>       UUID → posts.id
+<span class="key">user_id</span>       UUID → users.id
+<span class="key">comment_text</span>  TEXT NOT NULL
+<span class="key">created_at</span>    TIMESTAMPTZ</code></pre>
+
+      <div class="callout callout-info" style="margin-top:1rem">
+        <span class="callout-icon">🔒</span>
+        <div>All three tables have <strong>Row Level Security (RLS)</strong> enabled. Policies enforce that users can only read/write data they're permitted to access, with a final security backstop at the database level.</div>
+      </div>
+    </div>
+
+    <!-- 5. ROLES -->
+    <div class="section" id="roles">
+      <div class="section-header">
+        <div class="step-badge">5</div>
+        <h2>User Roles & Permissions</h2>
+      </div>
+      <div class="roles-grid">
+        <div class="role-card author">
+          <div class="role-label">✍️ Author</div>
+          <div class="role-perm">Create posts</div>
+          <div class="role-perm">Edit own posts</div>
+          <div class="role-perm">Delete own posts</div>
+          <div class="role-perm">View comments on their posts</div>
+          <div class="role-perm">Comment on any post</div>
+        </div>
+        <div class="role-card viewer">
+          <div class="role-label">👁 Viewer</div>
+          <div class="role-perm">View all blog posts</div>
+          <div class="role-perm">Read AI summaries</div>
+          <div class="role-perm">Comment on posts</div>
+          <div class="role-perm">Delete own comments</div>
+        </div>
+        <div class="role-card admin">
+          <div class="role-label">🛡 Admin</div>
+          <div class="role-perm">Edit any post</div>
+          <div class="role-perm">Delete any post</div>
+          <div class="role-perm">Monitor all comments</div>
+          <div class="role-perm">Delete any comment</div>
+          <div class="role-perm">Change user roles</div>
+        </div>
+      </div>
+      <div class="callout callout-warn" style="margin-top:1rem">
+        <span class="callout-icon">⚠️</span>
+        <div>Permissions are enforced at <strong>3 layers</strong>: UI rendering (buttons hidden), API routes (401/403 responses), and Supabase RLS (database-level). To make yourself an Admin, update your role in the Supabase Dashboard → Table Editor → users table.</div>
+      </div>
+    </div>
+
+    <!-- 6. LOCAL SETUP -->
+    <div class="section" id="setup">
+      <div class="section-header">
+        <div class="step-badge">6</div>
+        <h2>Local Development Setup</h2>
+      </div>
+
+      <h3>Step 1 — Clone &amp; install</h3>
+      <pre><code>git clone https://github.com/YOUR_USERNAME/hivon-blog.git
+cd hivon-blog
+npm install</code></pre>
+
+      <h3>Step 2 — Set up Supabase</h3>
+      <div class="flow">
+        <div class="flow-step"><div class="flow-num">1</div><div class="flow-text">Go to <strong>supabase.com</strong> and create a new project (free tier)</div></div>
+        <div class="flow-step"><div class="flow-num">2</div><div class="flow-text">Open <strong>SQL Editor</strong> and paste the entire contents of <span class="inline-code">supabase-schema.sql</span> then click Run</div></div>
+        <div class="flow-step"><div class="flow-num">3</div><div class="flow-text">Go to <strong>Storage</strong> → Create bucket named <span class="inline-code">post-images</span>, set to public</div></div>
+        <div class="flow-step"><div class="flow-num">4</div><div class="flow-text">Go to <strong>Project Settings → API</strong> and copy your URL and anon key</div></div>
+      </div>
+
+      <h3>Step 3 — Get Google AI key</h3>
+      <div class="flow">
+        <div class="flow-step"><div class="flow-num">1</div><div class="flow-text">Visit <strong>aistudio.google.com</strong> and sign in with Google</div></div>
+        <div class="flow-step"><div class="flow-num">2</div><div class="flow-text">Click <strong>Get API Key</strong> → Create API key in new project</div></div>
+        <div class="flow-step"><div class="flow-num">3</div><div class="flow-text">Copy the key — free tier includes generous quota for summaries</div></div>
+      </div>
+
+      <h3>Step 4 — Configure env &amp; run</h3>
+      <pre><code>cp .env.local.example .env.local
+<span class="comment"># Fill in your values — see Section 7 below</span>
+
+npm run dev
+<span class="comment"># Open http://localhost:3000</span></code></pre>
+    </div>
+
+    <!-- 7. ENV VARS -->
+    <div class="section" id="env">
+      <div class="section-header">
+        <div class="step-badge">7</div>
+        <h2>Environment Variables</h2>
+      </div>
+      <table class="env-table">
+        <thead><tr><th>Variable</th><th>Where to find it</th><th>Required</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><div class="env-key">NEXT_PUBLIC_SUPABASE_URL</div></td>
+            <td>Supabase → Project Settings → API → Project URL</td>
+            <td><span class="tag tag-red">Required</span></td>
+          </tr>
+          <tr>
+            <td><div class="env-key">NEXT_PUBLIC_SUPABASE_ANON_KEY</div></td>
+            <td>Supabase → Project Settings → API → anon public</td>
+            <td><span class="tag tag-red">Required</span></td>
+          </tr>
+          <tr>
+            <td><div class="env-key">SUPABASE_SERVICE_ROLE_KEY</div></td>
+            <td>Supabase → Project Settings → API → service_role <strong>(keep secret!)</strong></td>
+            <td><span class="tag tag-red">Required</span></td>
+          </tr>
+          <tr>
+            <td><div class="env-key">GOOGLE_AI_API_KEY</div></td>
+            <td>aistudio.google.com → Get API Key</td>
+            <td><span class="tag tag-red">Required</span></td>
+          </tr>
+          <tr>
+            <td><div class="env-key">NEXT_PUBLIC_APP_URL</div></td>
+            <td><span class="inline-code">http://localhost:3000</span> locally, your Vercel URL in production</td>
+            <td><span class="tag">Optional</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="callout callout-warn" style="margin-top:0.75rem">
+        <span class="callout-icon">⚠️</span>
+        <div><strong>Never commit .env.local to Git.</strong> It's in .gitignore. The service role key bypasses RLS — treat it like a password.</div>
+      </div>
+    </div>
+
+    <!-- 8. AI INTEGRATION -->
+    <div class="section" id="ai">
+      <div class="section-header">
+        <div class="step-badge">8</div>
+        <h2>AI Summary Integration</h2>
+      </div>
+      <p style="margin-bottom:1rem; font-size:0.875rem; color:var(--ink-muted)">Google Gemini 1.5 Flash is called once per post at creation time. The summary is stored in the database — never regenerated on reads.</p>
+
+      <div class="flow">
+        <div class="flow-step"><div class="flow-num">1</div><div class="flow-text">Author submits new post form with title + HTML body</div></div>
+        <div class="flow-step"><div class="flow-num">2</div><div class="flow-text"><strong>Strip HTML</strong> tags from body to get clean text input</div></div>
+        <div class="flow-step"><div class="flow-num">3</div><div class="flow-text"><strong>Truncate to 3,000 chars</strong> to reduce input tokens (cost optimization)</div></div>
+        <div class="flow-step"><div class="flow-num">4</div><div class="flow-text">Send prompt to <strong>Gemini 1.5 Flash</strong>: "Generate a ~200-word summary of this post"</div></div>
+        <div class="flow-step"><div class="flow-num">5</div><div class="flow-text">Store <strong>summary in posts.summary</strong> column — never fetched from AI again</div></div>
+        <div class="flow-step"><div class="flow-num">6</div><div class="flow-text">Display summary on <strong>listing page</strong> (preview) and <strong>post page</strong> (full, in styled box)</div></div>
+      </div>
+
+      <div class="callout callout-tip" style="margin-top:1rem">
+        <span class="callout-icon">💡</span>
+        <div><strong>Cost optimization:</strong> 1000 posts = exactly 1000 Gemini API calls total, regardless of how many billions of times those posts are read. The summary is computed once and cached in PostgreSQL forever.</div>
+      </div>
+    </div>
+
+    <!-- 9. DEPLOYMENT -->
+    <div class="section" id="deploy">
+      <div class="section-header">
+        <div class="step-badge">9</div>
+        <h2>Deployment to Vercel</h2>
+      </div>
+
+      <h3>Step 1 — Push to GitHub</h3>
+      <pre><code>git init
+git add .
+git commit -m "feat: Hivon Blog Platform - initial commit"
+git remote add origin https://github.com/YOUR_USERNAME/hivon-blog.git
+git push -u origin main</code></pre>
+
+      <h3>Step 2 — Import on Vercel</h3>
+      <div class="flow">
+        <div class="flow-step"><div class="flow-num">1</div><div class="flow-text">Go to <strong>vercel.com</strong> → New Project → Import from GitHub</div></div>
+        <div class="flow-step"><div class="flow-num">2</div><div class="flow-text">Select your <strong>hivon-blog</strong> repository</div></div>
+        <div class="flow-step"><div class="flow-num">3</div><div class="flow-text">In <strong>Environment Variables</strong>, add all 5 variables from Section 7 (use your production Supabase keys)</div></div>
+        <div class="flow-step"><div class="flow-num">4</div><div class="flow-text">Click <strong>Deploy</strong> — Vercel auto-detects Next.js, no config needed</div></div>
+      </div>
+
+      <h3>Step 3 — Configure Supabase Auth redirect</h3>
+      <pre><code><span class="comment"># In Supabase Dashboard → Authentication → URL Configuration</span>
+<span class="comment"># Add to "Redirect URLs":</span>
+https://your-app.vercel.app/api/auth/callback</code></pre>
+
+      <div class="callout callout-tip" style="margin-top:0.75rem">
+        <span class="callout-icon">✓</span>
+        <div>After deploy, update <span class="inline-code">NEXT_PUBLIC_APP_URL</span> on Vercel to your actual Vercel domain URL.</div>
+      </div>
+    </div>
+
+    <!-- 10. KEY FLOWS -->
+    <div class="section" id="flows">
+      <div class="section-header">
+        <div class="step-badge">10</div>
+        <h2>Key Application Flows</h2>
+      </div>
+
+      <h3>Authentication Flow</h3>
+      <div class="flow">
+        <div class="flow-step"><div class="flow-num">1</div><div class="flow-text">User registers at <strong>/auth/register</strong> selecting Viewer or Author role</div></div>
+        <div class="flow-step"><div class="flow-num">2</div><div class="flow-text">Supabase Auth creates user → <strong>DB trigger</strong> auto-creates users row with role</div></div>
+        <div class="flow-step"><div class="flow-num">3</div><div class="flow-text">Session stored in cookies via <strong>auth-helpers-nextjs</strong></div></div>
+        <div class="flow-step"><div class="flow-num">4</div><div class="flow-text"><strong>middleware.ts</strong> protects /dashboard/* and /admin/* — redirects if no session</div></div>
+      </div>
+
+      <h3 style="margin-top:1.5rem">Post Creation Flow (Author)</h3>
+      <div class="flow">
+        <div class="flow-step"><div class="flow-num">1</div><div class="flow-text">Author goes to <strong>/dashboard/posts/new</strong>, fills in title, body, optional image URL</div></div>
+        <div class="flow-step"><div class="flow-num">2</div><div class="flow-text"><strong>POST /api/posts</strong> — verifies session + role ('author' or 'admin' only)</div></div>
+        <div class="flow-step"><div class="flow-num">3</div><div class="flow-text">Generates unique slug, calls <strong>Gemini API</strong> for summary</div></div>
+        <div class="flow-step"><div class="flow-num">4</div><div class="flow-text">Inserts post row with summary into Supabase, redirects to <strong>/blog/[slug]</strong></div></div>
+      </div>
+    </div>
+
+    <!-- 11. CHECKLIST -->
+    <div class="section" id="checklist">
+      <div class="section-header">
+        <div class="step-badge">11</div>
+        <h2>Submission Checklist</h2>
+      </div>
+      <ul class="checklist">
+        <li><span class="check">✓</span> Next.js 14 App Router with TypeScript</li>
+        <li><span class="check">✓</span> Supabase Auth (email/password, session cookies)</li>
+        <li><span class="check">✓</span> Three user roles: Author, Viewer, Admin</li>
+        <li><span class="check">✓</span> Post fields: title, featured image, body, comments</li>
+        <li><span class="check">✓</span> AI summary via Google Gemini 1.5 Flash (generated once, stored in DB)</li>
+        <li><span class="check">✓</span> Summary displayed on listing page</li>
+        <li><span class="check">✓</span> Search across post titles and content</li>
+        <li><span class="check">✓</span> Pagination (9 posts per page)</li>
+        <li><span class="check">✓</span> Edit functionality (Author own posts + Admin any post)</li>
+        <li><span class="check">✓</span> Comments system with delete permissions</li>
+        <li><span class="check">✓</span> Admin panel: view all posts, edit any, monitor comments, manage user roles</li>
+        <li><span class="check">✓</span> Row Level Security on all Supabase tables</li>
+        <li><span class="check">✓</span> Database: users, posts (with summary), comments tables</li>
+        <li><span class="check">✓</span> Git repo with comprehensive README</li>
+        <li><span class="check">✓</span> Vercel deployment config (vercel.json)</li>
+        <li><span class="check">✓</span> Written explanation: AI tools, feature logic, cost optimization, bug fix</li>
+        <li><span class="check">✓</span> Environment variables documented</li>
+        <li><span class="check">✓</span> AI coding tool used: Claude (claude.ai)</li>
+      </ul>
+    </div>
+
+  </div><!-- end .content -->
+</div><!-- end .layout -->
+
+</body>
+</html>
