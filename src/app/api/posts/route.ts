@@ -6,8 +6,8 @@ import { generatePostSummary } from '@/lib/ai';
 import { generateUniqueSlug } from '@/lib/slugify';
 import { Database } from '@/types/database';
 
-function makeSupabase() {
-  const cookieStore = cookies();
+async function makeSupabase() {
+  const cookieStore = await cookies();
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -34,7 +34,7 @@ function makeAdminClient() {
 // GET /api/posts
 export async function GET(request: NextRequest) {
   try {
-    const supabase = makeSupabase();
+    const supabase = await makeSupabase();
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '9');
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
 // POST /api/posts
 export async function POST(request: NextRequest) {
   try {
-    const supabase = makeSupabase();
+    const supabase = await makeSupabase();
     const admin = makeAdminClient();
 
     const { data: { session } } = await supabase.auth.getSession();
@@ -91,7 +91,11 @@ export async function POST(request: NextRequest) {
       .eq('id', session.user.id)
       .single();
 
-    if (!currentUser || !['author', 'admin'].includes(currentUser.role)) {
+    const user = currentUser as {
+      role: 'author' | 'viewer' | 'admin'
+    } | null;
+
+    if (!user || !['author', 'admin'].includes(user.role)) {
       return NextResponse.json({ error: 'Forbidden - Authors and Admins only' }, { status: 403 });
     }
 
@@ -107,16 +111,18 @@ export async function POST(request: NextRequest) {
     const summary = await generatePostSummary(title, postBody);
 
     const { data: post, error } = await admin
-      .from('posts')
-      .insert({
-        title,
-        body: postBody,
-        image_url: image_url || null,
-        author_id: session.user.id,
-        summary,
-        slug,
-        published: true,
-      })
+      .from('posts' as any)
+      .insert([
+        {
+          title,
+          body: postBody,
+          image_url: image_url || null,
+          author_id: session.user.id,
+          summary,
+          slug,
+          published: true,
+        },
+      ] as any)
       .select(`*, author:users!posts_author_id_fkey(id, name, email, role)`)
       .single();
 

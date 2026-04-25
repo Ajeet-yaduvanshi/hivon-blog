@@ -1,9 +1,5 @@
 -- ============================================================
 -- Hivon Blog Platform - Supabase Database Schema
--- Run this in your Supabase SQL Editor
--- ============================================================
-
--- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ============================================================
@@ -169,8 +165,3 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
--- ============================================================
--- STORAGE BUCKET (run separately in Supabase Dashboard)
--- ============================================================
--- Create a storage bucket named "post-images" in Supabase Dashboard
--- and set it to public access.
