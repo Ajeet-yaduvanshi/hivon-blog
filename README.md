@@ -4,9 +4,10 @@ A full-stack blogging platform built with **Next.js 14**, **Supabase**, and **Go
 
 ---
 
+
 ## 🚀 Live Demo
 
-**Deployed URL:** `https://hivon-blog.vercel.app` _(replace with your deployed URL)_
+**Deployed URL:** `https://hivon-blog-pied.vercel.app/`
 
 ---
 
@@ -75,8 +76,6 @@ npm install
 3. In **Storage**, create a bucket named `post-images` and set it to public
 
 ### 4. Configure environment variables
-
-Copy the example file and fill in your values:
 
 ```bash
 cp .env.local.example .env.local
