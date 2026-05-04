@@ -4,8 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { Database } from '@/types/database';
 
-function makeSupabase() {
-  const cookieStore = cookies();
+async function makeSupabase() {
+  const cookieStore = await cookies(); // ← add await
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -22,6 +22,9 @@ function makeSupabase() {
   );
 }
 
+// Then await it in POST and DELETE:
+const supabase = await makeSupabase(); // ← add await
+
 function makeAdminClient() {
   return createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -32,7 +35,7 @@ function makeAdminClient() {
 // POST /api/comments
 export async function POST(request: NextRequest) {
   try {
-    const supabase = makeSupabase();
+    const supabase =await makeSupabase();
     const admin = makeAdminClient();
 
     const { data: { session } } = await supabase.auth.getSession();
@@ -64,7 +67,7 @@ export async function POST(request: NextRequest) {
 // DELETE /api/comments?id=xxx
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = makeSupabase();
+    const supabase = await makeSupabase();
     const admin = makeAdminClient();
 
     const { data: { session } } = await supabase.auth.getSession();
