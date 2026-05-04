@@ -23,7 +23,6 @@ async function makeSupabase() {
 }
 
 // Then await it in POST and DELETE:
-const supabase = await makeSupabase(); // ← add await
 
 function makeAdminClient() {
   return createClient<Database>(
