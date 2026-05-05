@@ -1,51 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { User } from '@/types/database';
+import { useAuth } from '@/lib/auth-context';
 
 export function Navbar() {
-  const [user, setUser] = useState<User | null>(null);
+  const { user } = useAuth(); // ✅ single source, no extra Supabase call
   const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
-
-  useEffect(() => {
-    async function loadUser() {
-      // ✅ Fix: use authUser directly, not session
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { data } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        setUser(data);
-      }
-    }
-    loadUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        const { data } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        setUser(data);
-      } else {
-        setUser(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   const handleLogout = async () => {
+    const supabase = createClient();
     await supabase.auth.signOut();
-    setUser(null);
     router.push('/');
     router.refresh();
   };
@@ -66,7 +34,6 @@ export function Navbar() {
         alignItems: 'center',
         justifyContent: 'space-between',
       }}>
-        {/* Logo */}
         <Link href="/" style={{
           fontFamily: 'var(--font-display)',
           fontSize: '1.4rem',
@@ -77,7 +44,6 @@ export function Navbar() {
           Hivon<span style={{ color: 'var(--accent)' }}>.</span>
         </Link>
 
-        {/* Desktop Nav */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
           <Link href="/blog" style={{ color: 'var(--ink-soft)', fontSize: '0.9rem', fontWeight: '500' }}>
             Blog
