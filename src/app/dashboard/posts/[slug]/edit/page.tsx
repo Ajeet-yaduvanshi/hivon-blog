@@ -21,13 +21,13 @@ export default function EditPostPage() {
   useEffect(() => {
     async function load() {
       // Check auth
-      const { data: { user:authUser } } = await supabase.auth.getUser();
-      if (!authUser) { router.push('/auth/login'); return; }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { router.push('/auth/login'); return; }
 
       const { data: user } = await supabase
         .from('users')
         .select('role')
-        .eq('id', authUser.id)
+        .eq('id', session.user.id)
         .single();
 
       if (!user || !['author', 'admin'].includes(user.role)) {

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { User, Post } from '@/types/database';
 import { formatDistanceToNow } from 'date-fns';
+ const supabase = createClient();
 
 type PostWithAuthor = Post & {
   author?: { id: string; name: string; email: string } | null;
@@ -16,13 +17,13 @@ export default function DashboardPage() {
   const [posts, setPosts] = useState<PostWithAuthor[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const supabase = createClient();
+ 
 
   useEffect(() => {
     async function load() {
       // ✅ Use getUser() instead of getSession()
-      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-      if (authError || !authUser) {
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
+      if (!session) {
         router.push('/auth/login');
         return;
       }
@@ -30,7 +31,7 @@ export default function DashboardPage() {
       const { data: currentUser } = await supabase
         .from('users')
         .select('*')
-        .eq('id', authUser.id)
+        .eq('id', session.user.id)
         .single();
 
       setUser(currentUser);

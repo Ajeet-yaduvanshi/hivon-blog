@@ -4,14 +4,14 @@ import { User } from '@/types/database';
 export async function getCurrentUser(): Promise<User | null> {
   try {
     const supabase = await createServerClient();
-    const { data: { user:authUser } } = await supabase.auth.getUser();
+    const { data: { session } } = await supabase.auth.getSession();
 
-    if (!authUser) return null;
+    if (!session) return null;
 
     const { data: user } = await supabase
       .from('users')
       .select('*')
-      .eq('id', authUser.id)
+      .eq('id', session.user.id)
       .single();
 
     return user;

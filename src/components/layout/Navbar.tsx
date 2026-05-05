@@ -15,12 +15,12 @@ export function Navbar() {
   useEffect(() => {
     async function loadUser() {
       // ✅ Fix: use authUser directly, not session
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (authUser) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
         const { data } = await supabase
           .from('users')
           .select('*')
-          .eq('id', authUser.id)
+          .eq('id', session.user.id)
           .single();
         setUser(data);
       }

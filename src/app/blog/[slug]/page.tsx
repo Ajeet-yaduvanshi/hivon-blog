@@ -40,12 +40,12 @@ export default function BlogPostPage() {
       }
 
       // ✅ Fix: getUser() and correct property access
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (authUser) {
+      const { data: { session} } = await supabase.auth.getSession();
+      if (session) {
         const { data: user } = await supabase
           .from('users')
           .select('*')
-          .eq('id', authUser.id)
+          .eq('id', session.user.id)
           .single();
         setCurrentUser(user);
       }

@@ -80,15 +80,15 @@ export async function POST(request: NextRequest) {
     const supabase = await makeSupabase();
     const admin = makeAdminClient();
 
-    const { data: { user:authUser } } = await supabase.auth.getUser();
-    if (!authUser) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { data: currentUser } = await supabase
       .from('users')
       .select('*')
-      .eq('id', authUser.id)
+      .eq('id', session.user.id)
       .single();
 
     const user = currentUser as {
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
           title,
           body: postBody,
           image_url: image_url || null,
-          author_id: authUser.id,
+          author_id: session.user.id,
           summary,
           slug,
           published: true,
