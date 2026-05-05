@@ -23,47 +23,69 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const loadUser = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
+  try {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
+    if (sessionError) {
+      console.error("Session error:", sessionError);
+      setUser(null);
+      return;
+    }
+
+    if (session?.user) {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+
+      if (error) {
+        console.error("User fetch error:", error);
+        setUser(null); // 🔥 important fallback
+      } else {
+        setUser(data);
+      }
+    } else {
+      setUser(null);
+    }
+  } catch (err) {
+    console.error("Auth crash:", err);
+    setUser(null);
+  } finally {
+    setLoading(false);
+  }
+};
+
+  useEffect(() => {
+    loadUser();
+
+   const { data: { subscription } } = supabase.auth.onAuthStateChange(
+  async (_event, session) => {
+    try {
       if (session?.user) {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('users')
           .select('*')
           .eq('id', session.user.id)
           .single();
 
-        setUser(data);
+        if (error) {
+          console.error("User fetch error:", error);
+          setUser(null);
+        } else {
+          setUser(data);
+        }
       } else {
         setUser(null);
       }
-    } catch {
+    } catch (err) {
+      console.error("Auth change crash:", err);
       setUser(null);
     } finally {
-      setLoading(false);
+      setLoading(false); // ✅ ALWAYS run
     }
-  };
-
-  useEffect(() => {
-    loadUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        if (session?.user) {
-          const { data } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-
-          setUser(data);
-        } else {
-          setUser(null);
-        }
-
-        setLoading(false);
-      }
-    );
+  }
+);
 
     return () => subscription.unsubscribe();
   }, []);

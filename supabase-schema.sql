@@ -1,5 +1,7 @@
 -- ============================================================
--- Hivon Blog Platform - Supabase Database Schema
+-- Hivon Blog Platform - FINAL FIXED SCHEMA
+-- ============================================================
+
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ============================================================
@@ -52,101 +54,112 @@ CREATE INDEX IF NOT EXISTS idx_posts_slug ON public.posts(slug);
 CREATE INDEX IF NOT EXISTS idx_comments_post_id ON public.comments(post_id);
 CREATE INDEX IF NOT EXISTS idx_comments_user_id ON public.comments(user_id);
 
--- Full-text search index on posts
 CREATE INDEX IF NOT EXISTS idx_posts_fts ON public.posts
   USING gin(to_tsvector('english', title || ' ' || body));
 
 -- ============================================================
--- ROW LEVEL SECURITY (RLS)
+-- ENABLE RLS
 -- ============================================================
-
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.posts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
 
--- Users policies
-CREATE POLICY "Users can view all profiles" ON public.users
-  FOR SELECT USING (true);
+-- ============================================================
+-- USERS POLICIES
+-- ============================================================
+CREATE POLICY "Users can view all profiles"
+ON public.users FOR SELECT USING (true);
 
-CREATE POLICY "Users can update own profile" ON public.users
-  FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Users can update own profile"
+ON public.users FOR UPDATE USING (auth.uid() = id);
 
-CREATE POLICY "Users can insert own profile" ON public.users
-  FOR INSERT WITH CHECK (auth.uid() = id);
-
--- Posts policies
-CREATE POLICY "Anyone can view published posts" ON public.posts
-  FOR SELECT USING (published = true);
-
-CREATE POLICY "Authors can create posts" ON public.posts
-  FOR INSERT WITH CHECK (
-    auth.uid() = author_id AND
-    EXISTS (
-      SELECT 1 FROM public.users
-      WHERE id = auth.uid() AND role IN ('author', 'admin')
-    )
-  );
-
-CREATE POLICY "Authors can update own posts" ON public.posts
-  FOR UPDATE USING (
-    auth.uid() = author_id OR
-    EXISTS (
-      SELECT 1 FROM public.users
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
-
-CREATE POLICY "Authors can delete own posts" ON public.posts
-  FOR DELETE USING (
-    auth.uid() = author_id OR
-    EXISTS (
-      SELECT 1 FROM public.users
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
-
--- Comments policies
-CREATE POLICY "Anyone can view comments" ON public.comments
-  FOR SELECT USING (true);
-
-CREATE POLICY "Authenticated users can comment" ON public.comments
-  FOR INSERT WITH CHECK (auth.uid() = user_id AND auth.uid() IS NOT NULL);
-
-CREATE POLICY "Users can update own comments" ON public.comments
-  FOR UPDATE USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own comments" ON public.comments
-  FOR DELETE USING (
-    auth.uid() = user_id OR
-    EXISTS (
-      SELECT 1 FROM public.users
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+CREATE POLICY "Users can insert own profile"
+ON public.users FOR INSERT WITH CHECK (auth.uid() = id);
 
 -- ============================================================
--- FUNCTIONS & TRIGGERS
+-- POSTS POLICIES
 -- ============================================================
+CREATE POLICY "Anyone can view published posts"
+ON public.posts FOR SELECT USING (published = true);
 
--- Auto-update updated_at timestamp
+CREATE POLICY "Authors can create posts"
+ON public.posts FOR INSERT WITH CHECK (
+  auth.uid() = author_id AND
+  EXISTS (
+    SELECT 1 FROM public.users
+    WHERE id = auth.uid() AND role IN ('author', 'admin')
+  )
+);
+
+CREATE POLICY "Authors can update own posts"
+ON public.posts FOR UPDATE USING (
+  auth.uid() = author_id OR
+  EXISTS (
+    SELECT 1 FROM public.users
+    WHERE id = auth.uid() AND role = 'admin'
+  )
+);
+
+CREATE POLICY "Authors can delete own posts"
+ON public.posts FOR DELETE USING (
+  auth.uid() = author_id OR
+  EXISTS (
+    SELECT 1 FROM public.users
+    WHERE id = auth.uid() AND role = 'admin'
+  )
+);
+
+-- ============================================================
+-- COMMENTS POLICIES
+-- ============================================================
+CREATE POLICY "Anyone can view comments"
+ON public.comments FOR SELECT USING (true);
+
+CREATE POLICY "Authenticated users can comment"
+ON public.comments FOR INSERT WITH CHECK (
+  auth.uid() = user_id AND auth.uid() IS NOT NULL
+);
+
+CREATE POLICY "Users can update own comments"
+ON public.comments FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own comments"
+ON public.comments FOR DELETE USING (
+  auth.uid() = user_id OR
+  EXISTS (
+    SELECT 1 FROM public.users
+    WHERE id = auth.uid() AND role = 'admin'
+  )
+);
+
+-- ============================================================
+-- UPDATED_AT FUNCTION
+-- ============================================================
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
   NEW.updated_at = NOW();
   RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$ LANGUAGE plpgsql;
 
-CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON public.users
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_users_updated_at
+BEFORE UPDATE ON public.users
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_posts_updated_at BEFORE UPDATE ON public.posts
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_posts_updated_at
+BEFORE UPDATE ON public.posts
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_comments_updated_at BEFORE UPDATE ON public.comments
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_comments_updated_at
+BEFORE UPDATE ON public.comments
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Auto-create user profile on signup
+-- ============================================================
+-- 🔥 FINAL FIX: USER AUTO-CREATION (IMPORTANT)
+-- ============================================================
+DROP FUNCTION IF EXISTS public.handle_new_user CASCADE;
+
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -159,9 +172,10 @@ BEGIN
   );
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
-CREATE OR REPLACE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 
+CREATE TRIGGER on_auth_user_created
+AFTER INSERT ON auth.users
+FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
