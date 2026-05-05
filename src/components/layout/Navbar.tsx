@@ -14,12 +14,13 @@ export function Navbar() {
 
   useEffect(() => {
     async function loadUser() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
+      // ✅ Fix: use authUser directly, not session
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) {
         const { data } = await supabase
           .from('users')
           .select('*')
-          .eq('id', session.user.id)
+          .eq('id', authUser.id)
           .single();
         setUser(data);
       }
@@ -52,9 +53,7 @@ export function Navbar() {
   return (
     <nav style={{
       position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
+      top: 0, left: 0, right: 0,
       height: 'var(--nav-height)',
       background: 'rgba(247, 244, 239, 0.95)',
       backdropFilter: 'blur(10px)',
@@ -103,34 +102,19 @@ export function Navbar() {
                 <button
                   onClick={() => setMenuOpen(!menuOpen)}
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    background: 'none',
-                    border: '1.5px solid var(--border)',
-                    borderRadius: '6px',
-                    padding: '0.35rem 0.75rem',
-                    cursor: 'pointer',
-                    color: 'var(--ink-soft)',
-                    fontSize: '0.88rem',
-                    fontWeight: '500',
+                    display: 'flex', alignItems: 'center', gap: '0.5rem',
+                    background: 'none', border: '1.5px solid var(--border)',
+                    borderRadius: '6px', padding: '0.35rem 0.75rem',
+                    cursor: 'pointer', color: 'var(--ink-soft)',
+                    fontSize: '0.88rem', fontWeight: '500',
                   }}
                 >
-                  <span
-                    style={{
-                      width: '24px',
-                      height: '24px',
-                      borderRadius: '50%',
-                      background: 'var(--accent)',
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '0.7rem',
-                      fontWeight: '700',
-                      flexShrink: 0,
-                    }}
-                  >
+                  <span style={{
+                    width: '24px', height: '24px', borderRadius: '50%',
+                    background: 'var(--accent)', color: 'white',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '0.7rem', fontWeight: '700', flexShrink: 0,
+                  }}>
                     {user.name?.charAt(0).toUpperCase()}
                   </span>
                   {user.name?.split(' ')[0]}
@@ -138,16 +122,10 @@ export function Navbar() {
 
                 {menuOpen && (
                   <div style={{
-                    position: 'absolute',
-                    top: 'calc(100% + 8px)',
-                    right: 0,
-                    background: 'var(--white)',
-                    border: '1px solid var(--border)',
-                    borderRadius: '8px',
-                    boxShadow: 'var(--shadow-md)',
-                    minWidth: '180px',
-                    overflow: 'hidden',
-                    zIndex: 200,
+                    position: 'absolute', top: 'calc(100% + 8px)', right: 0,
+                    background: 'var(--white)', border: '1px solid var(--border)',
+                    borderRadius: '8px', boxShadow: 'var(--shadow-md)',
+                    minWidth: '180px', overflow: 'hidden', zIndex: 200,
                   }}>
                     <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--border)' }}>
                       <div style={{ fontSize: '0.8rem', color: 'var(--ink-muted)' }}>{user.email}</div>
@@ -163,14 +141,10 @@ export function Navbar() {
                     <button
                       onClick={() => { setMenuOpen(false); handleLogout(); }}
                       style={{
-                        width: '100%',
-                        textAlign: 'left',
-                        padding: '0.65rem 1rem',
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--error)',
-                        fontSize: '0.9rem',
-                        cursor: 'pointer',
+                        width: '100%', textAlign: 'left',
+                        padding: '0.65rem 1rem', background: 'none',
+                        border: 'none', color: 'var(--error)',
+                        fontSize: '0.9rem', cursor: 'pointer',
                         borderTop: '1px solid var(--border)',
                       }}
                     >

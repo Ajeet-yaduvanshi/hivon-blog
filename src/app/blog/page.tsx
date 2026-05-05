@@ -2,20 +2,21 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Post } from '@/types/database';
 import { formatDistanceToNow } from 'date-fns';
 
+// Extended type to include joined author field from API
+type PostWithAuthor = Post & {
+  author?: { id: string; name: string; email: string } | null;
+};
+
 export default function BlogPage() {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<PostWithAuthor[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState({
-    total: 0,
-    totalPages: 1,
-  });
+  const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
 
   const fetchPosts = useCallback(async () => {
     setLoading(true);
@@ -27,7 +28,7 @@ export default function BlogPage() {
       });
       const res = await fetch(`/api/posts?${params}`);
       const data = await res.json();
-      setPosts(data.posts || []);
+      setPosts((data.posts || []) as PostWithAuthor[]);
       setPagination(data.pagination || { total: 0, totalPages: 1 });
     } catch (error) {
       console.error('Error fetching posts:', error);
@@ -59,10 +60,7 @@ export default function BlogPage() {
 
         {/* Search */}
         <form onSubmit={handleSearch} style={{
-          display: 'flex',
-          gap: '0.75rem',
-          maxWidth: '480px',
-          margin: '0 auto 3rem',
+          display: 'flex', gap: '0.75rem', maxWidth: '480px', margin: '0 auto 3rem',
         }}>
           <input
             type="text"
@@ -72,9 +70,7 @@ export default function BlogPage() {
             onChange={(e) => setSearchInput(e.target.value)}
             style={{ flex: 1 }}
           />
-          <button type="submit" className="btn btn-primary">
-            Search
-          </button>
+          <button type="submit" className="btn btn-primary">Search</button>
           {search && (
             <button
               type="button"
@@ -119,29 +115,15 @@ export default function BlogPage() {
         {/* Pagination */}
         {pagination.totalPages > 1 && (
           <div className="pagination">
-            <button
-              className="page-btn"
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page === 1}
-            >
+            <button className="page-btn" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
               ‹
             </button>
-
             {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((p) => (
-              <button
-                key={p}
-                className={`page-btn ${p === page ? 'active' : ''}`}
-                onClick={() => setPage(p)}
-              >
+              <button key={p} className={`page-btn ${p === page ? 'active' : ''}`} onClick={() => setPage(p)}>
                 {p}
               </button>
             ))}
-
-            <button
-              className="page-btn"
-              onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
-              disabled={page === pagination.totalPages}
-            >
+            <button className="page-btn" onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))} disabled={page === pagination.totalPages}>
               ›
             </button>
           </div>
@@ -151,7 +133,7 @@ export default function BlogPage() {
   );
 }
 
-function PostCard({ post, index }: { post: Post; index: number }) {
+function PostCard({ post, index }: { post: PostWithAuthor; index: number }) {
   return (
     <Link href={`/blog/${post.slug}`} style={{ textDecoration: 'none' }}>
       <article
@@ -173,11 +155,8 @@ function PostCard({ post, index }: { post: Post; index: number }) {
           <div style={{
             height: '200px',
             background: 'linear-gradient(135deg, var(--cream-dark), var(--cream-darker))',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '2.5rem',
-            color: 'var(--border)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '2.5rem', color: 'var(--border)',
           }}>
             ✦
           </div>
@@ -187,72 +166,49 @@ function PostCard({ post, index }: { post: Post; index: number }) {
           {/* Meta */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
             <span style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: '50%',
-              background: 'var(--accent)',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '0.7rem',
-              fontWeight: '700',
-              flexShrink: 0,
+              width: '28px', height: '28px', borderRadius: '50%',
+              background: 'var(--accent)', color: 'white',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '0.7rem', fontWeight: '700', flexShrink: 0,
             }}>
               {post.author?.name?.charAt(0).toUpperCase()}
             </span>
             <span style={{ fontSize: '0.82rem', color: 'var(--ink-muted)' }}>
               {post.author?.name} ·{' '}
-              {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+              {/* ✅ Fix: guard null created_at */}
+              {post.created_at
+                ? formatDistanceToNow(new Date(post.created_at), { addSuffix: true })
+                : 'Unknown date'}
             </span>
           </div>
 
           {/* Title */}
           <h2 style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: '1.2rem',
-            fontWeight: '600',
-            marginBottom: '0.75rem',
-            color: 'var(--ink)',
-            lineHeight: '1.35',
+            fontFamily: 'var(--font-display)', fontSize: '1.2rem', fontWeight: '600',
+            marginBottom: '0.75rem', color: 'var(--ink)', lineHeight: '1.35',
           }}>
             {post.title}
           </h2>
 
           {/* AI Summary */}
           {post.summary && (
-            <div style={{
-              fontSize: '0.875rem',
-              color: 'var(--ink-muted)',
-              lineHeight: '1.6',
-              flex: 1,
-              marginBottom: '1rem',
-            }}>
+            <div style={{ fontSize: '0.875rem', color: 'var(--ink-muted)', lineHeight: '1.6', flex: 1, marginBottom: '1rem' }}>
               {post.summary.slice(0, 160)}{post.summary.length > 160 ? '...' : ''}
             </div>
           )}
 
           {/* Footer */}
           <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingTop: '0.75rem',
-            borderTop: '1px solid var(--border)',
-            marginTop: 'auto',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            paddingTop: '0.75rem', borderTop: '1px solid var(--border)', marginTop: 'auto',
           }}>
             <span style={{
-              fontSize: '0.78rem',
-              fontWeight: '600',
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              color: 'var(--accent)',
+              fontSize: '0.78rem', fontWeight: '600', letterSpacing: '0.06em',
+              textTransform: 'uppercase', color: 'var(--accent)',
             }}>
               AI Summary ✦
             </span>
-            <span style={{ fontSize: '0.8rem', color: 'var(--ink-muted)' }}>
-              Read more →
-            </span>
+            <span style={{ fontSize: '0.8rem', color: 'var(--ink-muted)' }}>Read more →</span>
           </div>
         </div>
       </article>

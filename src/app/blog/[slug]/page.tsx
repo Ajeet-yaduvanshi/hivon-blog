@@ -7,10 +7,20 @@ import { Post, Comment, User } from '@/types/database';
 import { createClient } from '@/lib/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 
+// Extended types to include joined fields from API
+type CommentWithUser = Comment & {
+  user?: { id: string; name: string } | null;
+};
+
+type PostWithRelations = Post & {
+  author?: { id: string; name: string; email: string } | null;
+  comments?: CommentWithUser[];
+};
+
 export default function BlogPostPage() {
   const params = useParams();
   const router = useRouter();
-  const [post, setPost] = useState<Post | null>(null);
+  const [post, setPost] = useState<PostWithRelations | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [comment, setComment] = useState('');
@@ -21,23 +31,25 @@ export default function BlogPostPage() {
   useEffect(() => {
     async function load() {
       setLoading(true);
+
       // Fetch post
       const res = await fetch(`/api/posts/${params.slug}`);
       if (res.ok) {
         const data = await res.json();
-        setPost(data.post);
+        setPost(data.post as PostWithRelations);
       }
 
-      // Fetch current user
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
+      // ✅ Fix: getUser() and correct property access
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) {
         const { data: user } = await supabase
           .from('users')
           .select('*')
-          .eq('id', session.user.id)
+          .eq('id', authUser.id)
           .single();
         setCurrentUser(user);
       }
+
       setLoading(false);
     }
     load();
@@ -46,9 +58,7 @@ export default function BlogPostPage() {
   const handleDelete = async () => {
     if (!confirm('Delete this post? This action cannot be undone.')) return;
     const res = await fetch(`/api/posts/${params.slug}`, { method: 'DELETE' });
-    if (res.ok) {
-      router.push('/blog');
-    }
+    if (res.ok) router.push('/blog');
   };
 
   const handleComment = async (e: React.FormEvent) => {
@@ -90,7 +100,7 @@ export default function BlogPostPage() {
 
   const canEdit =
     currentUser?.role === 'admin' ||
-    (currentUser?.role === 'author' && post?.author_id === currentUser.id);
+    (currentUser?.role === 'author' && post?.author_id === currentUser?.id);
 
   if (loading) {
     return (
@@ -116,7 +126,7 @@ export default function BlogPostPage() {
     <article style={{ padding: '3rem 0 5rem' }}>
       <div className="content-container fade-up">
         {/* Back */}
-        <Link href="/blog" style={{ 
+        <Link href="/blog" style={{
           display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
           color: 'var(--ink-muted)', fontSize: '0.875rem', marginBottom: '2rem'
         }}>
@@ -125,17 +135,8 @@ export default function BlogPostPage() {
 
         {/* Featured Image */}
         {post.image_url && (
-          <div style={{
-            borderRadius: '12px',
-            overflow: 'hidden',
-            marginBottom: '2.5rem',
-            maxHeight: '460px',
-          }}>
-            <img
-              src={post.image_url}
-              alt={post.title}
-              style={{ width: '100%', height: '460px', objectFit: 'cover' }}
-            />
+          <div style={{ borderRadius: '12px', overflow: 'hidden', marginBottom: '2.5rem', maxHeight: '460px' }}>
+            <img src={post.image_url} alt={post.title} style={{ width: '100%', height: '460px', objectFit: 'cover' }} />
           </div>
         )}
 
@@ -144,33 +145,25 @@ export default function BlogPostPage() {
 
         {/* Author + Date + Actions */}
         <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '1rem',
-          marginBottom: '2rem',
-          paddingBottom: '1.5rem',
-          borderBottom: '1px solid var(--border)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem',
+          paddingBottom: '1.5rem', borderBottom: '1px solid var(--border)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              background: 'var(--accent)',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: '700',
+              width: '40px', height: '40px', borderRadius: '50%',
+              background: 'var(--accent)', color: 'white',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700',
             }}>
               {post.author?.name?.charAt(0).toUpperCase()}
             </div>
             <div>
               <div style={{ fontWeight: '500', fontSize: '0.95rem' }}>{post.author?.name}</div>
               <div style={{ fontSize: '0.8rem', color: 'var(--ink-muted)' }}>
-                {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                {/* ✅ Fix: guard null created_at */}
+                {post.created_at
+                  ? formatDistanceToNow(new Date(post.created_at), { addSuffix: true })
+                  : 'Unknown date'}
               </div>
             </div>
           </div>
@@ -187,48 +180,27 @@ export default function BlogPostPage() {
           )}
         </div>
 
-        {/* AI Summary Box */}
+        {/* AI Summary */}
         {post.summary && (
           <div style={{
             background: 'linear-gradient(135deg, #fff8f7, #fff3f2)',
             border: '1.5px solid var(--accent-light)',
-            borderRadius: '10px',
-            padding: '1.5rem',
-            marginBottom: '2.5rem',
+            borderRadius: '10px', padding: '1.5rem', marginBottom: '2.5rem',
           }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              marginBottom: '0.75rem',
-            }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
               <span style={{ color: 'var(--accent)', fontSize: '0.7rem' }}>✦</span>
-              <span style={{
-                fontSize: '0.75rem',
-                fontWeight: '600',
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                color: 'var(--accent)',
-              }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--accent)' }}>
                 AI-Generated Summary
               </span>
             </div>
-            <p style={{
-              color: 'var(--ink-soft)',
-              fontSize: '0.95rem',
-              lineHeight: '1.7',
-              margin: 0,
-            }}>
+            <p style={{ color: 'var(--ink-soft)', fontSize: '0.95rem', lineHeight: '1.7', margin: 0 }}>
               {post.summary}
             </p>
           </div>
         )}
 
         {/* Post Body */}
-        <div
-          className="prose"
-          dangerouslySetInnerHTML={{ __html: post.body }}
-        />
+        <div className="prose" dangerouslySetInnerHTML={{ __html: post.body }} />
 
         {/* Comments Section */}
         <div style={{ marginTop: '4rem', paddingTop: '3rem', borderTop: '1px solid var(--border)' }}>
@@ -268,33 +240,28 @@ export default function BlogPostPage() {
                 No comments yet. Be the first to share your thoughts!
               </p>
             ) : (
-              [...(post.comments || [])].reverse().map((c: Comment) => (
+              [...(post.comments || [])].reverse().map((c: CommentWithUser) => (
                 <div key={c.id} style={{
-                  background: 'var(--white)',
-                  border: '1px solid var(--border)',
-                  borderRadius: '8px',
-                  padding: '1.25rem',
+                  background: 'var(--white)', border: '1px solid var(--border)',
+                  borderRadius: '8px', padding: '1.25rem',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                       <div style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '50%',
-                        background: 'var(--ink-soft)',
-                        color: 'white',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '0.7rem',
-                        fontWeight: '700',
+                        width: '32px', height: '32px', borderRadius: '50%',
+                        background: 'var(--ink-soft)', color: 'white',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '0.7rem', fontWeight: '700',
                       }}>
                         {c.user?.name?.charAt(0).toUpperCase()}
                       </div>
                       <div>
                         <span style={{ fontWeight: '500', fontSize: '0.9rem' }}>{c.user?.name}</span>
                         <span style={{ color: 'var(--ink-muted)', fontSize: '0.78rem', marginLeft: '0.5rem' }}>
-                          {formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}
+                          {/* ✅ Fix: guard null created_at */}
+                          {c.created_at
+                            ? formatDistanceToNow(new Date(c.created_at), { addSuffix: true })
+                            : 'Unknown date'}
                         </span>
                       </div>
                     </div>
@@ -302,12 +269,8 @@ export default function BlogPostPage() {
                       <button
                         onClick={() => handleDeleteComment(c.id)}
                         style={{
-                          background: 'none',
-                          border: 'none',
-                          color: 'var(--ink-muted)',
-                          cursor: 'pointer',
-                          fontSize: '0.78rem',
-                          padding: '0.25rem',
+                          background: 'none', border: 'none', color: 'var(--ink-muted)',
+                          cursor: 'pointer', fontSize: '0.78rem', padding: '0.25rem',
                         }}
                       >
                         Delete

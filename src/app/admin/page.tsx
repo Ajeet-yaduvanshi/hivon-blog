@@ -25,9 +25,9 @@ export default function AdminPage() {
 
   useEffect(() => {
     async function load() {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { user:authUser } } = await supabase.auth.getUser();
 
-      if (!session) {
+      if (!authUser) {
         router.push('/auth/login');
         return;
       }
@@ -35,7 +35,7 @@ export default function AdminPage() {
       const { data: currentUser } = await (supabase
         .from('users' as any) as any)
         .select('*')
-        .eq('id', session.user.id)
+        .eq('id', authUser.id)
         .single();
 
       const userData = currentUser as any;

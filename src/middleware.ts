@@ -15,6 +15,7 @@ export async function middleware(req: NextRequest) {
         },
         setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
           cookiesToSet.forEach(({ name, value, options }) => {
+            req.cookies.set(name, value);
             res.cookies.set(name, value, options);
           });
         },
@@ -22,22 +23,20 @@ export async function middleware(req: NextRequest) {
     }
   );
 
-  // Refresh session
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  // Use getUser() instead of getSession() — more reliable server-side
+  const { data: { user:authUser } } = await supabase.auth.getUser();
 
   const { pathname } = req.nextUrl;
 
-  // Protect routes
+  // Protect dashboard and admin routes
   if (pathname.startsWith('/dashboard') || pathname.startsWith('/admin')) {
-    if (!session) {
+    if (!authUser) {
       return NextResponse.redirect(new URL('/auth/login', req.url));
     }
   }
 
-  // Redirect logged-in users
-  if (pathname.startsWith('/auth') && session) {
+  // Redirect already logged-in users away from auth pages
+  if (pathname.startsWith('/auth') && authUser) {
     return NextResponse.redirect(new URL('/dashboard', req.url));
   }
 

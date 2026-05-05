@@ -7,7 +7,6 @@ import { createClient } from '@/lib/supabase/client';
 import { User, Post } from '@/types/database';
 import { formatDistanceToNow } from 'date-fns';
 
-// Extend Post type to include the joined author field
 type PostWithAuthor = Post & {
   author?: { id: string; name: string; email: string } | null;
 };
@@ -21,13 +20,17 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function load() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { router.push('/auth/login'); return; }
+      // ✅ Use getUser() instead of getSession()
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+      if (authError || !authUser) {
+        router.push('/auth/login');
+        return;
+      }
 
       const { data: currentUser } = await supabase
         .from('users')
         .select('*')
-        .eq('id', session.user.id)
+        .eq('id', authUser.id)
         .single();
 
       setUser(currentUser);
@@ -186,7 +189,6 @@ export default function DashboardPage() {
                         {post.title}
                       </Link>
                       <span style={{ fontSize: '0.78rem', color: 'var(--ink-muted)' }}>
-                        {/* Fix: guard against null created_at */}
                         {post.created_at
                           ? formatDistanceToNow(new Date(post.created_at), { addSuffix: true })
                           : 'Unknown date'}
