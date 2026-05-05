@@ -24,19 +24,19 @@ export async function middleware(req: NextRequest) {
   );
 
   // Use getUser() instead of getSession() — more reliable server-side
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
 
   const { pathname } = req.nextUrl;
 
   // Protect dashboard and admin routes
   if (pathname.startsWith('/dashboard') || pathname.startsWith('/admin')) {
-    if (!session) {
+    if (!user) {
       return NextResponse.redirect(new URL('/auth/login', req.url));
     }
   }
 
   // Redirect already logged-in users away from auth pages
-  if (pathname.startsWith('/auth') && session) {
+  if (pathname.startsWith('/auth') && user) {
     return NextResponse.redirect(new URL('/dashboard', req.url));
   }
 
