@@ -4,6 +4,8 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { User } from '@/types/database';
 
+const supabase = createClient(); // ✅ SINGLE INSTANCE
+
 type AuthContextType = {
   user: User | null;
   loading: boolean;
@@ -22,14 +24,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loadUser = async () => {
     try {
-      const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
+
       if (session?.user) {
         const { data } = await supabase
           .from('users')
           .select('*')
           .eq('id', session.user.id)
           .single();
+
         setUser(data);
       } else {
         setUser(null);
@@ -44,19 +47,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     loadUser();
 
-    const supabase = createClient();
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (_event, session) => {
         if (session?.user) {
           const { data } = await supabase
             .from('users')
             .select('*')
             .eq('id', session.user.id)
             .single();
+
           setUser(data);
         } else {
           setUser(null);
         }
+
         setLoading(false);
       }
     );
