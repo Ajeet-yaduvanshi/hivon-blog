@@ -1,11 +1,11 @@
-import { createServerClient } from '@supabase/ssr';
+import { createServerClient as createSSRClient } from '@supabase/ssr';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { Database } from '@/types/database';
 
-export const createServerSupabaseClient = () => {
-  const cookieStore = cookies();
-  return createServerClient<Database>(
+export const createServerSupabaseClient = async () => {
+  const cookieStore = await cookies();
+  return createSSRClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -26,6 +26,9 @@ export const createServerSupabaseClient = () => {
     }
   );
 };
+
+// Named export matching what your other files import
+export const createServerClient = createServerSupabaseClient;
 
 // Alias for backward compat
 export const createServerClient2 = createServerSupabaseClient;

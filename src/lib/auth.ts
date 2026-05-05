@@ -3,7 +3,7 @@ import { User } from '@/types/database';
 
 export async function getCurrentUser(): Promise<User | null> {
   try {
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session?.user) return null;
