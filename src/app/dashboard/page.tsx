@@ -7,9 +7,14 @@ import { createClient } from '@/lib/supabase/client';
 import { User, Post } from '@/types/database';
 import { formatDistanceToNow } from 'date-fns';
 
+// Extend Post type to include the joined author field
+type PostWithAuthor = Post & {
+  author?: { id: string; name: string; email: string } | null;
+};
+
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<PostWithAuthor[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const supabase = createClient();
@@ -27,7 +32,6 @@ export default function DashboardPage() {
 
       setUser(currentUser);
 
-      // Fetch posts by this author
       if (currentUser) {
         let query = supabase
           .from('posts')
@@ -42,7 +46,7 @@ export default function DashboardPage() {
         }
 
         const { data: userPosts } = await query;
-        setPosts(userPosts || []);
+        setPosts((userPosts as PostWithAuthor[]) || []);
       }
 
       setLoading(false);
@@ -106,11 +110,7 @@ export default function DashboardPage() {
           {[
             { label: 'Total Posts', value: posts.length, icon: '📝' },
             { label: 'Published', value: posts.filter(p => p.published).length, icon: '✅' },
-            {
-              label: 'Total Comments',
-              value: 'View on posts',
-              icon: '💬',
-            },
+            { label: 'Total Comments', value: 'View on posts', icon: '💬' },
           ].map((stat) => (
             <div key={stat.label} style={{
               background: 'var(--white)',
@@ -186,8 +186,11 @@ export default function DashboardPage() {
                         {post.title}
                       </Link>
                       <span style={{ fontSize: '0.78rem', color: 'var(--ink-muted)' }}>
-                        {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-                        {user.role === 'admin' && post.author && ` · by ${(post.author as any).name}`}
+                        {/* Fix: guard against null created_at */}
+                        {post.created_at
+                          ? formatDistanceToNow(new Date(post.created_at), { addSuffix: true })
+                          : 'Unknown date'}
+                        {user.role === 'admin' && post.author && ` · by ${post.author.name}`}
                       </span>
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
