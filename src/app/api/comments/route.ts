@@ -37,8 +37,8 @@ export async function POST(request: NextRequest) {
     const supabase =await makeSupabase();
     const admin = makeAdminClient();
 
-    const { data: { session} } = await supabase.auth.getSession();
-    if (!session) {
+    const { data: { user:authUser} } = await supabase.auth.getUser();
+    if (!authUser) {
       return NextResponse.json({ error: 'Unauthorized - Please log in to comment' }, { status: 401 });
     }
 
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     const { data: comment, error } = await admin
       .from('comments')
-      .insert({ post_id, user_id: session.user.id, comment_text: comment_text.trim() })
+      .insert({ post_id, user_id: authUser.id, comment_text: comment_text.trim() })
       .select(`*, user:users!comments_user_id_fkey(id, name, email, avatar_url)`)
       .single();
 
@@ -69,22 +69,22 @@ export async function DELETE(request: NextRequest) {
     const supabase = await makeSupabase();
     const admin = makeAdminClient();
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { data: { user:authUser } } = await supabase.auth.getUser();
+    if (!authUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { searchParams } = new URL(request.url);
     const commentId = searchParams.get('id');
     if (!commentId) return NextResponse.json({ error: 'Comment ID required' }, { status: 400 });
 
     const { data: currentUser } = await supabase
-      .from('users').select('role').eq('id', session.user.id).single();
+      .from('users').select('role').eq('id', authUser.id).single();
 
     const { data: comment } = await supabase
       .from('comments').select('*').eq('id', commentId).single();
 
     if (!comment) return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
 
-    const canDelete = currentUser?.role === 'admin' || comment.user_id === session.user.id;
+    const canDelete = currentUser?.role === 'admin' || comment.user_id === authUser.id;
     if (!canDelete) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const { error } = await admin.from('comments').delete().eq('id', commentId);

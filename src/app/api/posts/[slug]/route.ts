@@ -77,13 +77,13 @@ export async function PUT(
     const supabase = await makeSupabase();
     const admin = makeAdminClient();
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { data: { user:authUser } } = await supabase.auth.getUser();
+    if (!authUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { data: currentUser } = await supabase
       .from('users' as any)
       .select('*')
-      .eq('id', session.user.id)
+      .eq('id', authUser.id)
       .single();
 
     const user = currentUser as any;
@@ -102,7 +102,7 @@ export async function PUT(
 
     const canEdit =
       user?.role === 'admin' ||
-      (user?.role === 'author' && postData.author_id === session.user.id);
+      (user?.role === 'author' && postData.author_id === authUser.id);
 
     if (!canEdit) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -139,13 +139,13 @@ export async function DELETE(
     const supabase = await makeSupabase();
     const admin = makeAdminClient();
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (!authUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { data: currentUser } = await supabase
       .from('users' as any)
       .select('*')
-      .eq('id', session.user.id)
+      .eq('id', authUser.id)
       .single();
 
     const user = currentUser as any;
@@ -164,7 +164,7 @@ export async function DELETE(
 
     const canDelete =
       user?.role === 'admin' ||
-      (user?.role === 'author' && postData.author_id === session.user.id);
+      (user?.role === 'author' && postData.author_id === authUser.id);
 
     if (!canDelete) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
